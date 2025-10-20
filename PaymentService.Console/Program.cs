@@ -1,16 +1,28 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using PaymentService.Console;
 using PaymentService.Console.MessageQueueing;
 
 HostApplicationBuilder builder = Host.CreateApplicationBuilder(args);
 
+var isDocker =
+    Environment.GetEnvironmentVariable("DOTNET_ENVIRONMENT") == "Docker";
+
+var appSettings = isDocker
+    ? "appsettings.Docker.json"
+    : "appsettings.json";
+
+var config = new ConfigurationBuilder()
+    .AddJsonFile(appSettings)
+    .Build();
+
 var hostName =
-    builder.Configuration["MessageQueuing:HostName"]!;
+    config.GetSection("MessageQueuing:HostName").Value!;
 var orderQueue =
-    builder.Configuration["MessageQueuing:OrderCreatedQueue"]!;
+    config.GetSection("MessageQueuing:OrderCreatedQueue").Value!;
 var paymentQueue =
-    builder.Configuration["MessageQueuing:PaymentCompletedQueue"]!;
+    config.GetSection("MessageQueuing:PaymentCompletedQueue").Value!;
 
 builder.Services.AddTransient<PaymentProcessor>();
 
